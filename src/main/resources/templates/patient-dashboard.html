@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>My Dashboard — MediCare</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+.dash-header{background:linear-gradient(135deg,#0a4d68 0%,#088395 100%);color:#fff;padding:32px 24px;margin-bottom:0}
+.dash-header-inner{max-width:1200px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:16px}
+.dash-welcome h1{font-size:26px;font-weight:800;margin-bottom:4px}
+.dash-welcome p{opacity:.85;font-size:14px}
+.dash-profile-badge{display:flex;gap:16px}
+.profile-item{text-align:center;background:rgba(255,255,255,.12);border-radius:8px;padding:10px 16px;border:1px solid rgba(255,255,255,.2)}
+.profile-item .val{font-size:15px;font-weight:700;display:block}
+.profile-item .key{font-size:11px;opacity:.75;text-transform:uppercase;letter-spacing:.4px}
+.dash-body{max-width:1200px;margin:0 auto;padding:28px 24px}
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:28px}
+.dash-stat{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px 22px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow)}
+.dash-stat-icon{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.dash-stat-body .val{font-size:26px;font-weight:800;color:var(--primary);line-height:1}
+.dash-stat-body .lbl{font-size:12px;color:var(--muted);margin-top:4px;font-weight:500}
+.quick-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:28px}
+.qa-card{background:#fff;border:1.5px solid var(--border);border-radius:12px;padding:20px;text-align:center;text-decoration:none;color:inherit;transition:all .2s;display:block}
+.qa-card:hover{border-color:var(--accent);box-shadow:0 4px 16px rgba(8,131,149,.1);transform:translateY(-2px);text-decoration:none}
+.qa-icon{font-size:28px;margin-bottom:10px;display:block}
+.qa-card h3{color:var(--primary);font-size:14px;font-weight:700;margin-bottom:4px}
+.qa-card p{color:var(--muted);font-size:12px;line-height:1.4}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.section-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:22px;box-shadow:var(--shadow)}
+.section-card-title{font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between}
+.section-card-title a{font-size:12px;font-weight:600;color:var(--accent)}
+.appt-item{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid #f0f4f8}
+.appt-item:last-child{border-bottom:none;padding-bottom:0}
+.appt-date{background:var(--primary);color:#fff;border-radius:8px;padding:6px 10px;text-align:center;min-width:46px}
+.appt-date .day{font-size:18px;font-weight:800;line-height:1;display:block}
+.appt-date .mon{font-size:10px;text-transform:uppercase;letter-spacing:.5px;opacity:.85}
+.appt-info h4{font-size:14px;font-weight:600;color:var(--text);margin-bottom:2px}
+.appt-info p{font-size:12px;color:var(--muted)}
+.rec-item{padding:12px 0;border-bottom:1px solid #f0f4f8}
+.rec-item:last-child{border-bottom:none;padding-bottom:0}
+.rec-item .diagnosis{font-weight:600;color:var(--primary);font-size:14px;margin-bottom:2px}
+.rec-item .meta{font-size:12px;color:var(--muted)}
+.empty-state{text-align:center;padding:24px;color:var(--muted);font-size:13px}
+.empty-state a{color:var(--accent);font-weight:600}
+@media(max-width:900px){.stats-row{grid-template-columns:repeat(2,1fr)}.quick-actions{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav class="topbar" id="topbar"></nav>
+
+<div class="dash-header">
+  <div class="dash-header-inner">
+    <div class="dash-welcome">
+      <h1>Good day, <span id="uname">Patient</span></h1>
+      <p>Here is an overview of your health activity</p>
+    </div>
+    <div class="dash-profile-badge" id="profileBadge"></div>
+  </div>
+</div>
+
+<div class="dash-body">
+
+  <!-- Stats Row -->
+  <div class="stats-row">
+    <div class="dash-stat">
+      <div class="dash-stat-icon" style="background:#e0f4f7;color:#088395">📅</div>
+      <div class="dash-stat-body"><div class="val" id="s-total">—</div><div class="lbl">Total Appointments</div></div>
+    </div>
+    <div class="dash-stat">
+      <div class="dash-stat-icon" style="background:#fef3c7;color:#d97706">⏳</div>
+      <div class="dash-stat-body"><div class="val" id="s-upcoming">—</div><div class="lbl">Upcoming</div></div>
+    </div>
+    <div class="dash-stat">
+      <div class="dash-stat-icon" style="background:#dcfce7;color:#16a34a">✅</div>
+      <div class="dash-stat-body"><div class="val" id="s-done">—</div><div class="lbl">Completed</div></div>
+    </div>
+    <div class="dash-stat">
+      <div class="dash-stat-icon" style="background:#eff6ff;color:#2563eb">📋</div>
+      <div class="dash-stat-body"><div class="val" id="s-records">—</div><div class="lbl">Medical Records</div></div>
+    </div>
+  </div>
+
+  <!-- Quick Actions -->
+  <div class="quick-actions">
+    <a href="/symptom-checker" class="qa-card">
+      <span class="qa-icon">🩺</span>
+      <h3>Symptom Checker</h3>
+      <p>AI-powered specialist recommendation</p>
+    </a>
+    <a href="/doctors" class="qa-card">
+      <span class="qa-icon">👨‍⚕️</span>
+      <h3>Book Appointment</h3>
+      <p>Browse doctors and choose a time slot</p>
+    </a>
+    <a href="/medical-records" class="qa-card">
+      <span class="qa-icon">📋</span>
+      <h3>My Medical Records</h3>
+      <p>View prescriptions &amp; doctor notes</p>
+    </a>
+    <a href="/appointments" class="qa-card">
+      <span class="qa-icon">📆</span>
+      <h3>All Appointments</h3>
+      <p>View &amp; manage all bookings</p>
+    </a>
+    <a href="/change-password" class="qa-card">
+      <span class="qa-icon">🔐</span>
+      <h3>Change Password</h3>
+      <p>Update your account password</p>
+    </a>
+    <a href="#notifications" class="qa-card" onclick="loadNotifications();return false">
+      <span class="qa-icon">🔔</span>
+      <h3>Notifications</h3>
+      <p>View your latest alerts <span class="badge badge-danger" id="notif-count" style="display:none"></span></p>
+    </a>
+  </div>
+
+  <!-- Two column: Appointments + Records -->
+  <div class="two-col">
+    <div class="section-card">
+      <div class="section-card-title">
+        Recent Appointments
+        <a href="/appointments">View All</a>
+      </div>
+      <div id="apptList"><div class="empty-state">Loading...</div></div>
+    </div>
+    <div class="section-card">
+      <div class="section-card-title">
+        Recent Medical Records
+        <a href="/medical-records">View All</a>
+      </div>
+      <div id="recList"><div class="empty-state">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- Notifications Panel -->
+  <div id="notifications" style="display:none;margin-top:20px">
+    <div class="section-card">
+      <div class="section-card-title">
+        Notifications
+        <button class="btn btn-outline" style="font-size:12px;padding:4px 12px" onclick="markAllRead()">Mark All Read</button>
+      </div>
+      <div id="notifList"><div class="empty-state">Loading notifications...</div></div>
+    </div>
+  </div>
+
+</div>
+
+<script src="/js/auth.js"></script>
+<script>
+if (MediCare.requireLogin()) {
+  MediCare.renderTopbar('dashboard');
+  document.getElementById('uname').textContent = MediCare.fullName();
+  loadAll();
+}
+
+async function loadAll(){
+  const [apptRes, recRes] = await Promise.all([
+    MediCare.api('/appointment/my'),
+    MediCare.api('/medical-record/my')
+  ]);
+
+  // Stats
+  let total=0, upcoming=0, done=0, records=0;
+
+  if (apptRes) {
+    const list = await apptRes.json();
+    total = list.length;
+    upcoming = list.filter(a => a.status==='PENDING'||a.status==='CONFIRMED').length;
+    done = list.filter(a => a.status==='COMPLETED').length;
+
+    const box = document.getElementById('apptList');
+    const recent = list.slice(0,5);
+    if (!recent.length) {
+      box.innerHTML = '<div class="empty-state">No appointments yet. <a href="/doctors">Book one now</a></div>';
+    } else {
+      box.innerHTML = recent.map(a => {
+        const d = new Date(a.appointmentDate);
+        const day = d.getDate();
+        const mon = d.toLocaleString('default',{month:'short'}).toUpperCase();
+        const slot = a.timeSlot ? formatSlot(a.timeSlot) : '';
+        return `<div class="appt-item">
+          <div class="appt-date"><span class="day">${day}</span><span class="mon">${mon}</span></div>
+          <div class="appt-info" style="flex:1">
+            <h4>Dr. ${a.doctorName||'-'}</h4>
+            <p>${a.specialization||''} ${slot?'· '+slot:''}</p>
+          </div>
+          <span class="badge ${badgeFor(a.status)}">${a.status}</span>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  if (recRes) {
+    const list = await recRes.json();
+    records = list.length;
+    const box = document.getElementById('recList');
+    const recent = list.slice(0,4);
+    if (!recent.length) {
+      box.innerHTML = '<div class="empty-state">No medical records yet.<br><small>Records appear after your doctor completes a visit.</small></div>';
+    } else {
+      box.innerHTML = recent.map(r => `
+        <div class="rec-item">
+          <div class="diagnosis">${r.diagnosis||'General Checkup'}</div>
+          <div class="meta">Dr. ${r.doctorName||'-'} &nbsp;·&nbsp; ${r.specialization||''} &nbsp;·&nbsp; ${r.recordDate||''}</div>
+          ${r.prescription ? '<div style="margin-top:4px;font-size:12px;color:var(--text)"><strong>Rx:</strong> '+r.prescription+'</div>' : ''}
+        </div>`).join('');
+    }
+  }
+
+  document.getElementById('s-total').textContent = total;
+  document.getElementById('s-upcoming').textContent = upcoming;
+  document.getElementById('s-done').textContent = done;
+  document.getElementById('s-records').textContent = records;
+
+  // Load notification count
+  const nRes = await MediCare.api('/notification/my');
+  if (nRes) {
+    const nd = await nRes.json();
+    const unread = nd.unread || 0;
+    const el = document.getElementById('notif-count');
+    if (unread > 0) { el.textContent = unread; el.style.display = 'inline-block'; }
+  }
+}
+
+async function loadNotifications(){
+  const panel = document.getElementById('notifications');
+  panel.style.display = panel.style.display==='none' ? 'block' : 'none';
+  if (panel.style.display==='block') {
+    const res = await MediCare.api('/notification/my');
+    if (!res) return;
+    const data = await res.json();
+    const list = data.notifications || [];
+    const box = document.getElementById('notifList');
+    if (!list.length) { box.innerHTML = '<div class="empty-state">No notifications</div>'; return; }
+    box.innerHTML = list.map(n => `
+      <div style="padding:12px 0;border-bottom:1px solid #f0f4f8;display:flex;align-items:flex-start;gap:10px">
+        <span style="font-size:18px">${n.read?'📭':'📬'}</span>
+        <div style="flex:1">
+          <p style="font-size:14px;margin:0;color:${n.read?'var(--muted)':'var(--text)'}">${n.message}</p>
+          <small style="color:var(--muted)">${n.createdAt||''}</small>
+        </div>
+        ${!n.read?`<button class="btn btn-outline" style="font-size:11px;padding:2px 8px" onclick="markRead(${n.id},this)">Mark Read</button>`:''}
+      </div>`).join('');
+  }
+}
+
+async function markRead(id, btn){
+  await MediCare.api('/notification/read/'+id, {method:'POST'});
+  btn.closest('div').querySelector('span').textContent = '📭';
+  btn.remove();
+}
+
+async function markAllRead(){
+  await MediCare.api('/notification/read-all', {method:'POST'});
+  loadNotifications();
+  document.getElementById('notif-count').style.display = 'none';
+}
+
+function formatSlot(slot){
+  const [h,m] = slot.split(':');
+  const hr = parseInt(h);
+  return (hr%12||12)+':'+(m||'00')+' '+(hr<12?'AM':'PM');
+}
+function badgeFor(s){
+  if(s==='CONFIRMED') return 'badge-success';
+  if(s==='CANCELLED') return 'badge-danger';
+  if(s==='COMPLETED') return 'badge-info';
+  return 'badge-warn';
+}
+</script>
+</body></html>

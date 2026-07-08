@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Doctors — MediCare</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;align-items:center}
+.filter-btn{padding:7px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--muted);transition:all .15s}
+.filter-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.filter-label{font-size:13px;font-weight:600;color:var(--muted);margin-right:4px}
+.doctor-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:22px;box-shadow:var(--shadow);transition:all .2s}
+.doctor-card:hover{box-shadow:var(--shadow-lg);transform:translateY(-2px)}
+.doc-avatar{width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--primary),#088395);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:22px;flex-shrink:0}
+.doc-name{font-size:16px;font-weight:700;color:var(--primary);margin-bottom:2px}
+.doc-spec{font-size:12px;font-weight:600;color:#088395}
+.doc-detail{font-size:13px;color:var(--muted);margin:3px 0;display:flex;align-items:center;gap:6px}
+.doc-fee{font-size:15px;font-weight:700;color:var(--primary);margin-top:8px}
+.cred-box{background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:14px;margin-top:12px}
+.cred-box p{font-size:13px;color:#166534;margin:3px 0}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;display:none;align-items:center;justify-content:center;padding:16px}
+.modal-overlay.open{display:flex}
+.modal{background:#fff;border-radius:16px;padding:28px;width:100%;max-width:560px;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.25)}
+.modal-title{font-size:18px;font-weight:700;color:var(--primary);margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+.slot-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.slot-btn{padding:10px;border-radius:8px;border:1.5px solid var(--border);background:#fff;font-size:13px;font-weight:600;cursor:pointer;transition:all .15s;text-align:center}
+.slot-btn:hover:not(.booked){border-color:var(--accent);color:var(--primary);background:var(--accent-light)}
+.slot-btn.selected{background:var(--primary);color:#fff;border-color:var(--primary)}
+.slot-btn.booked{background:#f1f5f9;color:#94a3b8;cursor:not-allowed;border-color:#e2e8f0;text-decoration:line-through}
+</style>
+</head>
+<body>
+<nav class="topbar" id="topbar"></nav>
+<div class="container">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 class="page-title" style="margin-bottom:0">Our Doctors</h1>
+      <p class="page-sub" style="margin-bottom:0">Browse specialists and book an appointment</p>
+    </div>
+    <div id="adminActions" style="display:none">
+      <button class="btn btn-primary" onclick="document.getElementById('addForm').style.display='block';document.getElementById('adminActions').style.display='none'">+ Add Doctor</button>
+    </div>
+  </div>
+
+  <!-- Add Doctor Form (Admin only) -->
+  <div id="addForm" class="card" style="display:none;margin-bottom:24px">
+    <h3 class="card-title">Add New Doctor</h3>
+    <div id="addFormMsg"></div>
+    <form id="docForm">
+      <div class="grid" style="grid-template-columns:1fr 1fr;gap:16px">
+        <div class="form-group"><label class="form-label">Full Name *</label><input name="name" class="form-control" required placeholder="e.g. Dr. Rajan Kumar"></div>
+        <div class="form-group">
+          <label class="form-label">Specialization / Department *</label>
+          <select name="specialization" class="form-control" required>
+            <option value="">Select department...</option>
+            <option>Cardiology</option>
+            <option>Neurology</option>
+            <option>Orthopedics</option>
+            <option>Pediatrics</option>
+            <option>Dermatology</option>
+            <option>General Medicine</option>
+            <option>ENT</option>
+            <option>Gynecology</option>
+          </select>
+        </div>
+        <div class="form-group"><label class="form-label">Qualification</label><input name="qualification" class="form-control" placeholder="e.g. MBBS, MD"></div>
+        <div class="form-group"><label class="form-label">Experience (years)</label><input name="experience" type="number" min="0" class="form-control" placeholder="e.g. 10"></div>
+        <div class="form-group"><label class="form-label">Email</label><input name="email" type="email" class="form-control" placeholder="doctor@hospital.com"></div>
+        <div class="form-group"><label class="form-label">Phone</label><input name="phone" class="form-control" placeholder="+91 XXXXX XXXXX"></div>
+        <div class="form-group"><label class="form-label">Available Days</label><input name="availableDays" class="form-control" placeholder="Mon-Sat" value="Mon-Sat"></div>
+        <div class="form-group"><label class="form-label">Available Time</label><input name="availableTime" class="form-control" placeholder="09:00-17:00" value="09:00-17:00"></div>
+        <div class="form-group"><label class="form-label">Consultation Fee (₹)</label><input name="consultationFee" type="number" min="0" step="50" class="form-control" placeholder="e.g. 500"></div>
+      </div>
+      <div class="alert alert-info" style="margin-bottom:14px;font-size:13px"><strong>Note:</strong> Login credentials are auto-generated from the doctor's name. They will be shown after saving.</div>
+      <div style="display:flex;gap:10px">
+        <button type="submit" class="btn btn-accent">Save Doctor</button>
+        <button type="button" class="btn btn-outline" onclick="document.getElementById('addForm').style.display='none';document.getElementById('adminActions').style.display='block'">Cancel</button>
+      </div>
+    </form>
+    <div id="credsBox" style="display:none"></div>
+  </div>
+
+  <!-- Department Filter -->
+  <div class="filter-bar">
+    <span class="filter-label">Filter:</span>
+    <button class="filter-btn active" onclick="filterDept('ALL',this)">All Departments</button>
+    <button class="filter-btn" onclick="filterDept('Cardiology',this)">Cardiology</button>
+    <button class="filter-btn" onclick="filterDept('Neurology',this)">Neurology</button>
+    <button class="filter-btn" onclick="filterDept('Orthopedics',this)">Orthopedics</button>
+    <button class="filter-btn" onclick="filterDept('Pediatrics',this)">Pediatrics</button>
+    <button class="filter-btn" onclick="filterDept('Dermatology',this)">Dermatology</button>
+    <button class="filter-btn" onclick="filterDept('General Medicine',this)">General Medicine</button>
+    <button class="filter-btn" onclick="filterDept('ENT',this)">ENT</button>
+    <button class="filter-btn" onclick="filterDept('Gynecology',this)">Gynecology</button>
+  </div>
+
+  <div id="list" class="grid grid-3">Loading...</div>
+</div>
+
+<!-- Booking Modal -->
+<div class="modal-overlay" id="bookModal">
+  <div class="modal">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <div class="modal-title" id="modalDocName">Book Appointment</div>
+      <button onclick="closeModal()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted)">&#x2715;</button>
+    </div>
+    <div class="modal-sub" id="modalDocSpec"></div>
+    <div class="alert alert-info" style="font-size:13px;margin-bottom:16px">Each slot is 1 hour. Booked slots (strikethrough) are not available.</div>
+    <div class="form-group">
+      <label class="form-label">Select Date *</label>
+      <input type="date" id="bookDate" class="form-control" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Select Time Slot *</label>
+      <div class="slot-grid" id="slotGrid">
+        <p style="color:var(--muted);grid-column:1/-1;font-size:13px">Select a date to see available slots</p>
+      </div>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Symptoms / Reason for Visit</label>
+      <textarea id="bookReason" class="form-control" rows="3" placeholder="Describe your symptoms briefly..."></textarea>
+    </div>
+    <div id="bookMsg"></div>
+    <div style="display:flex;gap:10px;margin-top:16px">
+      <button class="btn btn-accent" style="flex:1" onclick="submitBooking()">Confirm Booking</button>
+      <button class="btn btn-outline" onclick="closeModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script>
+let allDoctors = [];
+let selectedDoctorId = null;
+let selectedSlot = null;
+
+if (MediCare.requireLogin()) {
+  MediCare.renderTopbar('doctors');
+  if (MediCare.role() === 'ADMIN') document.getElementById('adminActions').style.display='flex';
+  loadDoctors();
+
+  // Auto-filter from URL param (e.g. from symptom checker)
+  const dept = new URLSearchParams(window.location.search).get('dept');
+  if (dept) {
+    setTimeout(()=>{
+      const btn = [...document.querySelectorAll('.filter-btn')].find(b=>b.textContent.trim()===dept);
+      if (btn) filterDept(dept, btn);
+    }, 500);
+  }
+}
+
+async function loadDoctors(){
+  const res = await MediCare.api('/doctor');
+  if (!res) return;
+  allDoctors = await res.json();
+  renderDoctors(allDoctors);
+}
+
+function filterDept(dept, btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = dept==='ALL' ? allDoctors : allDoctors.filter(d=>d.specialization===dept);
+  renderDoctors(filtered);
+}
+
+function renderDoctors(list){
+  const box = document.getElementById('list');
+  if (!list.length) { box.innerHTML = '<div class="card" style="grid-column:1/-1;text-align:center;color:var(--muted);padding:32px">No doctors found in this department.</div>'; return; }
+  const role = MediCare.role();
+  box.innerHTML = list.map(d => {
+    const initials = (d.name||'D').charAt(0).toUpperCase();
+    return `<div class="doctor-card">
+      <div style="display:flex;align-items:center;gap:14px;margin-bottom:14px">
+        <div class="doc-avatar">${initials}</div>
+        <div>
+          <div class="doc-name">Dr. ${d.name}</div>
+          <div class="doc-spec">${d.specialization||''}</div>
+        </div>
+      </div>
+      ${d.qualification ? `<div class="doc-detail"><span>🎓</span> ${d.qualification}</div>` : ''}
+      ${d.experience   ? `<div class="doc-detail"><span>⏱</span> ${d.experience} years experience</div>` : ''}
+      ${d.availableDays? `<div class="doc-detail"><span>📅</span> ${d.availableDays}</div>` : ''}
+      ${d.availableTime? `<div class="doc-detail"><span>🕐</span> ${d.availableTime}</div>` : ''}
+      ${d.phone        ? `<div class="doc-detail"><span>📞</span> ${d.phone}</div>` : ''}
+      ${d.consultationFee ? `<div class="doc-fee">Fee: ₹${d.consultationFee}</div>` : ''}
+      <div style="margin-top:14px;display:flex;gap:8px">
+        ${role==='PATIENT'
+          ? `<button class="btn btn-accent btn-block" onclick="openBookModal(${d.id},'Dr. ${d.name}','${d.specialization||''}')">Book Appointment</button>`
+          : role==='ADMIN'
+            ? `<button class="btn btn-danger btn-block" onclick="delDoc(${d.id})">Delete Doctor</button>`
+            : ''}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openBookModal(doctorId, name, spec){
+  selectedDoctorId = doctorId;
+  selectedSlot = null;
+  document.getElementById('modalDocName').textContent = 'Book with ' + name;
+  document.getElementById('modalDocSpec').textContent = spec;
+  document.getElementById('bookDate').value = '';
+  document.getElementById('bookReason').value = '';
+  document.getElementById('bookMsg').innerHTML = '';
+  document.getElementById('slotGrid').innerHTML = '<p style="color:var(--muted);grid-column:1/-1;font-size:13px">Select a date to see available slots</p>';
+  document.getElementById('bookDate').min = new Date().toISOString().split('T')[0];
+  document.getElementById('bookModal').classList.add('open');
+}
+
+function closeModal(){
+  document.getElementById('bookModal').classList.remove('open');
+}
+
+document.getElementById('bookDate').addEventListener('change', async function(){
+  const date = this.value;
+  if (!date || !selectedDoctorId) return;
+  document.getElementById('slotGrid').innerHTML = '<p style="color:var(--muted);grid-column:1/-1;font-size:13px">Loading slots...</p>';
+  selectedSlot = null;
+
+  const res = await MediCare.api('/appointment/slots?doctorId='+selectedDoctorId+'&date='+date);
+  if (!res) return;
+  const data = await res.json();
+  const booked = data.bookedSlots || [];
+  const all = data.allSlots || ['09:00','10:00','11:00','12:00','14:00','15:00','16:00','17:00'];
+
+  const today    = new Date().toISOString().split('T')[0];
+  const isToday  = (date === today);
+  const nowHour  = new Date().getHours();
+
+  document.getElementById('slotGrid').innerHTML = all.map(slot => {
+    const isBooked = booked.includes(slot);
+    const slotHour = parseInt(slot.split(':')[0], 10);
+    const isPast   = isToday && slotHour <= nowHour;
+    const disabled = isBooked || isPast;
+    const label    = formatSlot(slot);
+    const tag      = isPast ? '<br><small style="color:#94a3b8">Past</small>'
+                            : (isBooked ? '<br><small>Booked</small>' : '');
+    return `<button class="slot-btn${disabled?' booked':''}"
+      ${disabled?'disabled':`onclick="selectSlot('${slot}',this)"`}
+    >${label}${tag}</button>`;
+  }).join('');
+});
+
+function selectSlot(slot, btn){
+  document.querySelectorAll('.slot-btn').forEach(b=>b.classList.remove('selected'));
+  btn.classList.add('selected');
+  selectedSlot = slot;
+}
+
+async function submitBooking(){
+  const date   = document.getElementById('bookDate').value;
+  const reason = document.getElementById('bookReason').value.trim();
+  const msgBox = document.getElementById('bookMsg');
+
+  if (!date)        { msgBox.innerHTML='<div class="alert alert-error">Please select a date.</div>'; return; }
+  if (!selectedSlot){ msgBox.innerHTML='<div class="alert alert-error">Please select a time slot.</div>'; return; }
+
+  msgBox.innerHTML = '<p style="color:var(--muted);font-size:13px">Booking...</p>';
+
+  const res = await MediCare.api('/appointment/book', {
+    method:'POST',
+    body: JSON.stringify({ doctorId: selectedDoctorId, appointmentDate: date, timeSlot: selectedSlot, symptoms: reason })
+  });
+  if (!res) return;
+  const data = await res.json();
+  if (!res.ok) { msgBox.innerHTML='<div class="alert alert-error">'+(data.message||'Booking failed')+'</div>'; return; }
+  msgBox.innerHTML='<div class="alert alert-success">'+data.message+'</div>';
+  setTimeout(()=>{ closeModal(); window.location.href='/appointments'; }, 1500);
+}
+
+async function delDoc(id){
+  if (!confirm('Delete this doctor? Their appointments and records will also be removed.')) return;
+  const res = await MediCare.api('/admin/doctor/'+id, {method:'DELETE'});
+  if (res && res.ok) loadDoctors();
+  else { const d = await res.json(); alert(d.message||'Delete failed'); }
+}
+
+document.getElementById('docForm')?.addEventListener('submit', async function(e){
+  e.preventDefault();
+  const fd = new FormData(e.target);
+  const body = Object.fromEntries(fd);
+  const btn = e.target.querySelector('button[type=submit]');
+  btn.textContent = 'Saving...'; btn.disabled = true;
+
+  const res = await MediCare.api('/doctor', {method:'POST', body: JSON.stringify(body)});
+  if (!res) { btn.textContent='Save Doctor'; btn.disabled=false; return; }
+  const data = await res.json();
+
+  if (!res.ok) {
+    document.getElementById('addFormMsg').innerHTML = '<div class="alert alert-error">'+(data.message||'Failed')+'</div>';
+    btn.textContent='Save Doctor'; btn.disabled=false;
+    return;
+  }
+
+  document.getElementById('addFormMsg').innerHTML = '<div class="alert alert-success">'+data.message+'</div>';
+  btn.textContent='Save Doctor'; btn.disabled=false;
+  e.target.reset();
+
+  // Show credentials
+  document.getElementById('credsBox').style.display = 'block';
+  document.getElementById('credsBox').innerHTML = `
+    <div class="cred-box">
+      <p><strong>Doctor Login Credentials (share with the doctor):</strong></p>
+      <p>Username: <strong>${data.loginUsername}</strong></p>
+      <p>Password: <strong>${data.loginPassword}</strong></p>
+      <p style="margin-top:6px;font-size:12px;color:#166534">The doctor must change their password after first login.</p>
+    </div>`;
+  loadDoctors();
+});
+
+function formatSlot(slot){
+  const [h,m] = slot.split(':');
+  const hr = parseInt(h);
+  return (hr%12||12)+':'+(m||'00')+' '+(hr<12?'AM':'PM');
+}
+</script>
+</body></html>

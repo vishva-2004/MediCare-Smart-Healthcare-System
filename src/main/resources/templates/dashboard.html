@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Admin Dashboard — MediCare</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+.dash-header{background:linear-gradient(135deg,#0a4d68 0%,#088395 100%);color:#fff;padding:32px 24px;margin-bottom:0}
+.dash-header-inner{max-width:1200px;margin:0 auto}
+.dash-header h1{font-size:26px;font-weight:800;margin-bottom:4px}
+.dash-header p{opacity:.85;font-size:14px}
+.dash-body{max-width:1200px;margin:0 auto;padding:28px 24px}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:28px}
+.dash-stat{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px 22px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow)}
+.dash-stat-icon{width:46px;height:46px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.dash-stat-body .val{font-size:28px;font-weight:800;color:var(--primary);line-height:1}
+.dash-stat-body .lbl{font-size:11px;color:var(--muted);margin-top:4px;font-weight:500}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
+.section-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:22px;box-shadow:var(--shadow)}
+.section-card-title{font-size:15px;font-weight:700;color:var(--primary);margin-bottom:16px;padding-bottom:12px;border-bottom:1px solid var(--border)}
+.quick-btn{display:block;padding:12px 16px;border-radius:8px;border:1.5px solid var(--border);color:var(--text);text-decoration:none;font-size:14px;font-weight:600;margin-bottom:8px;transition:all .15s}
+.quick-btn:hover{border-color:var(--accent);color:var(--primary);background:var(--accent-light);text-decoration:none}
+.recent-item{padding:12px 0;border-bottom:1px solid #f0f4f8;display:flex;align-items:center;justify-content:space-between}
+.recent-item:last-child{border-bottom:none}
+.recent-item .info{font-size:13px;color:var(--text)}
+.recent-item .meta{font-size:12px;color:var(--muted);margin-top:2px}
+@media(max-width:768px){.stats-row{grid-template-columns:repeat(2,1fr)}.two-col{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav class="topbar" id="topbar"></nav>
+
+<div class="dash-header">
+  <div class="dash-header-inner">
+    <h1>Admin Dashboard</h1>
+    <p>Hospital management overview — all activity at a glance</p>
+  </div>
+</div>
+
+<div class="dash-body">
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="dash-stat">
+      <div class="dash-stat-icon" style="background:#eff6ff;color:#2563eb">👨‍⚕️</div>
+      <div class="dash-stat-body"><div class="val" id="stat-doctors">—</div><div class="lbl">Total Doctors</div></div>
+    </div>
+    <div class="dash-stat">
+      <div class="dash-stat-icon" style="background:#f0fdf4;color:#16a34a">🧑</div>
+      <div class="dash-stat-body"><div class="val" id="stat-patients">—</div><div class="lbl">Total Patients</div></div>
+    </div>
+    <div class="dash-stat">
+      <div class="dash-stat-icon" style="background:#e0f4f7;color:#088395">📅</div>
+      <div class="dash-stat-body"><div class="val" id="stat-appts">—</div><div class="lbl">Total Appointments</div></div>
+    </div>
+    <div class="dash-stat">
+      <div class="dash-stat-icon" style="background:#fef3c7;color:#d97706">⏳</div>
+      <div class="dash-stat-body"><div class="val" id="stat-pending">—</div><div class="lbl">Pending</div></div>
+    </div>
+    <div class="dash-stat">
+      <div class="dash-stat-icon" style="background:#dcfce7;color:#16a34a">🏁</div>
+      <div class="dash-stat-body"><div class="val" id="stat-completed">—</div><div class="lbl">Completed</div></div>
+    </div>
+    <div class="dash-stat">
+      <div class="dash-stat-icon" style="background:#f3e8ff;color:#9333ea">📋</div>
+      <div class="dash-stat-body"><div class="val" id="stat-records">—</div><div class="lbl">Medical Records</div></div>
+    </div>
+  </div>
+
+  <!-- Quick Actions + Recent Appointments -->
+  <div class="two-col">
+    <div class="section-card">
+      <div class="section-card-title">Quick Actions</div>
+      <a href="/doctors" class="quick-btn">👨‍⚕️ Manage Doctors</a>
+      <a href="/patients" class="quick-btn">🧑 View Patients</a>
+      <a href="/appointments" class="quick-btn">📅 View All Appointments</a>
+      <a href="/medical-records" class="quick-btn">📋 Medical Records</a>
+      <a href="/change-password" class="quick-btn">🔐 Change Password</a>
+    </div>
+    <div class="section-card">
+      <div class="section-card-title">Recent Appointments</div>
+      <div id="recentAppts"><p style="color:var(--muted);font-size:13px">Loading...</p></div>
+    </div>
+  </div>
+
+  <!-- Recent Records -->
+  <div class="section-card" style="margin-bottom:24px">
+    <div class="section-card-title">Recent Medical Records</div>
+    <div id="recentRecs"><p style="color:var(--muted);font-size:13px">Loading...</p></div>
+  </div>
+
+</div>
+
+<script src="/js/auth.js"></script>
+<script>
+if (MediCare.requireLogin()) {
+  MediCare.renderTopbar('dashboard');
+  loadDashboard();
+}
+
+async function loadDashboard(){
+  const [statsRes, apptsRes, recsRes] = await Promise.all([
+    MediCare.api('/admin/stats'),
+    MediCare.api('/appointment/all'),
+    MediCare.api('/medical-record')
+  ]);
+
+  if (statsRes) {
+    const s = await statsRes.json();
+    document.getElementById('stat-doctors').textContent   = s.totalDoctors ?? '—';
+    document.getElementById('stat-patients').textContent  = s.totalPatients ?? '—';
+    document.getElementById('stat-appts').textContent     = s.totalAppointments ?? '—';
+    document.getElementById('stat-pending').textContent   = s.pendingAppointments ?? '—';
+    document.getElementById('stat-completed').textContent = s.completedAppointments ?? '—';
+    document.getElementById('stat-records').textContent   = s.totalRecords ?? '—';
+  }
+
+  if (apptsRes) {
+    const list = await apptsRes.json();
+    const recent = list.slice(-5).reverse();
+    const box = document.getElementById('recentAppts');
+    if (!recent.length) { box.innerHTML='<p style="color:var(--muted);font-size:13px">No appointments yet</p>'; }
+    else {
+      box.innerHTML = recent.map(a => `
+        <div class="recent-item">
+          <div>
+            <div class="info"><strong>${a.patientName||'-'}</strong> → Dr. ${a.doctorName||'-'}</div>
+            <div class="meta">${a.appointmentDate||'-'} ${a.timeSlot?'· '+formatSlot(a.timeSlot):''}</div>
+          </div>
+          <span class="badge ${badgeFor(a.status)}">${a.status}</span>
+        </div>`).join('');
+    }
+  }
+
+  if (recsRes) {
+    const list = await recsRes.json();
+    const recent = list.slice(0,5);
+    const box = document.getElementById('recentRecs');
+    if (!recent.length) { box.innerHTML='<p style="color:var(--muted);font-size:13px">No medical records yet</p>'; }
+    else {
+      box.innerHTML = '<table class="table"><thead><tr><th>Patient</th><th>Doctor</th><th>Diagnosis</th><th>Date</th></tr></thead><tbody>'
+        + recent.map(r => `<tr><td>${r.patientName||'-'}</td><td>Dr. ${r.doctorName||'-'}</td><td>${r.diagnosis||'-'}</td><td>${r.recordDate||'-'}</td></tr>`).join('')
+        + '</tbody></table>';
+    }
+  }
+}
+
+function formatSlot(slot){
+  const [h,m] = slot.split(':');
+  const hr = parseInt(h);
+  return (hr%12||12)+':'+(m||'00')+' '+(hr<12?'AM':'PM');
+}
+function badgeFor(s){
+  if(s==='CONFIRMED') return 'badge-success';
+  if(s==='CANCELLED') return 'badge-danger';
+  if(s==='COMPLETED') return 'badge-info';
+  return 'badge-warn';
+}
+</script>
+</body></html>

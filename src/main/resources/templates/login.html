@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Login — MediCare</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+.auth-wrap{min-height:100vh;background:linear-gradient(135deg,#e0f4f7 0%,#f7fafc 100%);display:flex;align-items:center;justify-content:center;padding:24px}
+.auth-card{background:#fff;border-radius:16px;padding:44px 40px;width:100%;max-width:440px;box-shadow:0 10px 40px rgba(10,77,104,.12);border:1px solid var(--border)}
+.auth-logo{text-align:center;margin-bottom:28px}
+.auth-logo .brand-mark{width:48px;height:48px;border-radius:12px;background:var(--primary);display:inline-grid;place-items:center;color:#fff;font-weight:800;font-size:22px;margin-bottom:8px}
+.auth-logo h2{font-size:24px;font-weight:800;color:var(--primary);margin-bottom:4px}
+.auth-logo p{font-size:14px;color:var(--muted)}
+.fp-link{display:block;text-align:center;margin-top:12px;font-size:13px;color:var(--accent)}
+</style>
+</head>
+<body>
+<div class="auth-wrap">
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="brand-mark">+</div>
+      <h2>Welcome Back</h2>
+      <p>Sign in to your MediCare account</p>
+    </div>
+
+    <div id="alertBox"></div>
+
+    <form id="loginForm">
+      <div class="form-group">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" class="form-control" required autofocus placeholder="Enter your username">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" required placeholder="Enter your password">
+      </div>
+      <button type="submit" class="btn btn-primary btn-block btn-lg" style="margin-top:8px">Sign In</button>
+    </form>
+
+    <a href="/forgot-password" class="fp-link">Forgot your password?</a>
+
+    <p style="text-align:center;margin-top:20px;font-size:14px;color:var(--muted)">
+      Don't have an account? <a href="/register">Register here</a>
+    </p>
+  </div>
+</div>
+
+<script>
+document.getElementById('loginForm').addEventListener('submit', async function(e){
+  e.preventDefault();
+  const box = document.getElementById('alertBox');
+  box.innerHTML = '';
+  const btn = e.target.querySelector('button[type=submit]');
+  btn.textContent = 'Signing in...';
+  btn.disabled = true;
+  const fd = new FormData(e.target);
+  const body = { username: fd.get('username'), password: fd.get('password') };
+  try {
+    const res = await fetch('/auth/login', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      box.innerHTML = '<div class="alert alert-error">'+(data.message||'Login failed')+'</div>';
+      btn.textContent = 'Sign In'; btn.disabled = false;
+      return;
+    }
+    localStorage.setItem('jwtToken', data.token);
+    localStorage.setItem('username', data.username);
+    localStorage.setItem('role', data.role);
+    localStorage.setItem('fullName', data.fullName);
+    document.cookie = 'jwtToken=' + data.token + '; path=/; max-age=86400; SameSite=Lax';
+
+    if (data.role === 'ADMIN')      window.location.href = '/dashboard';
+    else if (data.role === 'DOCTOR') window.location.href = '/doctor-dashboard';
+    else                             window.location.href = '/patient-dashboard';
+  } catch(err) {
+    box.innerHTML = '<div class="alert alert-error">Network error. Please try again.</div>';
+    btn.textContent = 'Sign In'; btn.disabled = false;
+  }
+});
+</script>
+</body></html>

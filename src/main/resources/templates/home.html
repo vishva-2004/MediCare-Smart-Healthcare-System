@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>MediCare — Hospital Management System</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+.hero{background:linear-gradient(135deg,#0a4d68 0%,#088395 60%,#0a6e8a 100%);color:#fff;padding:90px 24px;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;top:-40px;right:-40px;width:400px;height:400px;border-radius:50%;background:rgba(255,255,255,.04)}
+.hero::after{content:'';position:absolute;bottom:-80px;left:-60px;width:350px;height:350px;border-radius:50%;background:rgba(255,255,255,.03)}
+.hero-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1.2fr 1fr;gap:60px;align-items:center;position:relative;z-index:1}
+.hero-trust{display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);border-radius:20px;padding:6px 16px;font-size:13px;font-weight:500;margin-bottom:22px;backdrop-filter:blur(4px)}
+.hero-trust::before{content:'';width:8px;height:8px;border-radius:50%;background:#22c55e;display:inline-block;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.hero h1{font-size:46px;font-weight:800;line-height:1.1;margin-bottom:18px;letter-spacing:-1.5px}
+.hero h1 span{color:#7dd3fc}
+.hero p{font-size:17px;opacity:.88;margin-bottom:32px;max-width:500px;line-height:1.65}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:36px}
+.hero .btn-white{background:#fff;color:var(--primary);font-weight:700;padding:14px 28px;font-size:15px;border-radius:8px;box-shadow:0 4px 14px rgba(0,0,0,.15)}
+.hero .btn-white:hover{background:#e0f4f7;text-decoration:none;transform:translateY(-1px)}
+.hero .btn-ghost{border:2px solid rgba(255,255,255,.5);color:#fff;padding:12px 26px;font-size:15px;border-radius:8px;font-weight:600}
+.hero .btn-ghost:hover{background:rgba(255,255,255,.12);border-color:#fff;text-decoration:none}
+.hero-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.hero-stat{text-align:center;padding:14px;background:rgba(255,255,255,.09);border:1px solid rgba(255,255,255,.15);border-radius:10px;backdrop-filter:blur(4px)}
+.hero-stat .num{font-size:24px;font-weight:800;display:block;line-height:1}
+.hero-stat .lbl{font-size:11px;opacity:.75;margin-top:4px;font-weight:500;text-transform:uppercase;letter-spacing:.5px}
+.hero-card{background:#fff;color:var(--text);border-radius:16px;padding:30px;box-shadow:0 20px 60px rgba(10,77,104,.25)}
+.hero-card-header{display:flex;align-items:center;gap:12px;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid var(--accent-light)}
+.hero-card-icon{width:40px;height:40px;border-radius:10px;background:var(--primary);display:grid;place-items:center;color:#fff;font-size:18px}
+.hero-card h3{color:var(--primary);font-size:17px;font-weight:700;margin:0}
+.hero-card ul{list-style:none;padding:0;margin:0}
+.hero-card li{padding:10px 0;border-bottom:1px solid #f0f4f8;display:flex;align-items:flex-start;gap:12px;font-size:14px;color:var(--text)}
+.hero-card li:last-child{border-bottom:none;padding-bottom:0}
+.check-icon{width:20px;height:20px;border-radius:50%;background:#dcfce7;color:#16a34a;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;margin-top:1px}
+.hero-card-footer{margin-top:18px;padding-top:16px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.dept-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px}
+.dept{background:#fff;border:1px solid var(--border);border-radius:10px;padding:20px;text-align:center;transition:all .2s;cursor:pointer}
+.dept:hover{border-color:var(--accent);box-shadow:0 4px 16px rgba(8,131,149,.1);transform:translateY(-2px)}
+.dept-icon{font-size:28px;margin-bottom:8px;display:block}
+.dept-name{font-weight:700;color:var(--primary);font-size:14px}
+.dept-desc{color:var(--muted);font-size:12px;margin-top:4px}
+.svc-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:20px}
+.svc{background:#fff;border:1px solid var(--border);border-radius:12px;padding:28px;transition:transform .2s,box-shadow .2s}
+.svc:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.svc-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:24px;margin-bottom:16px}
+.svc h4{color:var(--primary);font-size:16px;margin-bottom:8px;font-weight:700}
+.svc p{color:var(--muted);font-size:14px;line-height:1.6}
+.svc-tag{display:inline-block;font-size:11px;font-weight:600;padding:3px 10px;border-radius:12px;margin-top:12px}
+.cta{background:linear-gradient(135deg,var(--primary) 0%,#088395 100%);padding:70px 24px;text-align:center;color:#fff}
+.cta h2{font-size:30px;color:#fff;margin-bottom:12px;font-weight:800}
+.cta p{color:rgba(255,255,255,.85);margin-bottom:28px;font-size:16px}
+.cta .btn-cta{background:#fff;color:var(--primary);font-weight:700;padding:16px 36px;font-size:16px;border-radius:8px;box-shadow:0 4px 20px rgba(0,0,0,.2)}
+.cta .btn-cta:hover{background:#e0f4f7;text-decoration:none;transform:translateY(-1px)}
+.section{padding:70px 24px}
+.section-inner{max-width:1100px;margin:0 auto}
+.section h2{font-size:30px;font-weight:800;color:var(--primary);text-align:center;margin-bottom:8px}
+.section .sub{text-align:center;color:var(--muted);margin-bottom:44px;font-size:15px}
+@media(max-width:768px){.hero-inner{grid-template-columns:1fr}.hero h1{font-size:30px}.hero-stats{grid-template-columns:repeat(3,1fr)}.hero-card{display:none}}
+</style>
+</head>
+<body>
+<nav class="topbar">
+  <div class="topbar-inner">
+    <a href="/home" class="brand"><span class="brand-mark">+</span>Medi<span>Care</span></a>
+    <div class="nav-links">
+      <a href="/home" class="active">Home</a>
+      <a href="#services">Services</a>
+      <a href="#departments">Departments</a>
+      <a href="/login">Login</a>
+      <a href="/register" class="btn btn-primary" style="padding:8px 20px">Register</a>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-inner">
+    <div>
+      <div class="hero-trust">&#x2B50; Trusted Healthcare Platform — Chennai, India</div>
+      <h1>Advanced Healthcare,<br><span>Right at Your Fingertips</span></h1>
+      <p>Book specialist appointments instantly, get AI-powered symptom analysis, and manage your complete health journey — all in one secure platform.</p>
+      <div class="hero-btns">
+        <a href="/register" class="btn-white btn">Book Appointment</a>
+        <a href="/symptom-checker" class="btn-ghost btn">Check Symptoms</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat">
+          <span class="num">AI</span>
+          <div class="lbl">Symptom Checker</div>
+        </div>
+        <div class="hero-stat">
+          <span class="num">Live</span>
+          <div class="lbl">Slot Availability</div>
+        </div>
+        <div class="hero-stat">
+          <span class="num">24/7</span>
+          <div class="lbl">Online Booking</div>
+        </div>
+      </div>
+    </div>
+    <div class="hero-card">
+      <div class="hero-card-header">
+        <div class="hero-card-icon">+</div>
+        <h3>Why Choose MediCare?</h3>
+      </div>
+      <ul>
+        <li><div class="check-icon">&#10003;</div><div><strong>Qualified Specialist Doctors</strong><br><span style="color:var(--muted);font-size:12px">Board-certified across 8 departments</span></div></li>
+        <li><div class="check-icon">&#10003;</div><div><strong>Real-Time Slot Booking</strong><br><span style="color:var(--muted);font-size:12px">See live availability, book instantly</span></div></li>
+        <li><div class="check-icon">&#10003;</div><div><strong>AI Symptom Analysis</strong><br><span style="color:var(--muted);font-size:12px">Get specialist recommendations instantly</span></div></li>
+        <li><div class="check-icon">&#10003;</div><div><strong>Digital Medical Records</strong><br><span style="color:var(--muted);font-size:12px">Prescriptions stored securely online</span></div></li>
+        <li><div class="check-icon">&#10003;</div><div><strong>Role-Based Access</strong><br><span style="color:var(--muted);font-size:12px">Separate portals for Patients, Doctors &amp; Admin</span></div></li>
+      </ul>
+      <div class="hero-card-footer">
+        <span style="color:var(--success);font-weight:700;font-size:15px">&#x25CF;</span>
+        System Online &nbsp;·&nbsp; Secure JWT Authentication &nbsp;·&nbsp; MySQL Backed
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="services">
+  <div class="section-inner">
+    <h2>Our Services</h2>
+    <p class="sub">Everything you need for your healthcare journey in one place</p>
+    <div class="svc-grid">
+      <div class="svc">
+        <div class="svc-icon" style="background:#e0f4f7;color:#088395">📅</div>
+        <h4>Appointment Booking</h4>
+        <p>Book a time slot with your preferred specialist online. Real-time availability check ensures you never wait for a confirmed slot.</p>
+        <span class="svc-tag" style="background:#dcfce7;color:#166534">Available</span>
+      </div>
+      <div class="svc">
+        <div class="svc-icon" style="background:#f0fdf4;color:#16a34a">🩺</div>
+        <h4>AI Symptom Checker</h4>
+        <p>Describe your symptoms and our AI will suggest the right specialist department to consult for your condition.</p>
+        <span class="svc-tag" style="background:#dcfce7;color:#166534">AI Powered</span>
+      </div>
+      <div class="svc">
+        <div class="svc-icon" style="background:#eff6ff;color:#2563eb">👨‍⚕️</div>
+        <h4>Expert Doctors</h4>
+        <p>All our doctors are qualified specialists with years of clinical experience across 8 major medical departments.</p>
+        <span class="svc-tag" style="background:#dcfce7;color:#166534">Qualified Doctors</span>
+      </div>
+      <div class="svc">
+        <div class="svc-icon" style="background:#fef3c7;color:#d97706">📋</div>
+        <h4>Digital Medical Records</h4>
+        <p>Doctors add prescriptions and diagnoses after your visit. Access your complete medical history securely anytime.</p>
+        <span class="svc-tag" style="background:#dcfce7;color:#166534">Available</span>
+      </div>
+      <div class="svc">
+        <div class="svc-icon" style="background:#fce7f3;color:#db2777">🔔</div>
+        <h4>Appointment Reminders</h4>
+        <p>Receive instant in-app notifications when your appointment is confirmed, and reminders before your visit.</p>
+        <span class="svc-tag" style="background:#dcfce7;color:#166534">In-App Alerts</span>
+      </div>
+      <div class="svc">
+        <div class="svc-icon" style="background:#f3e8ff;color:#9333ea">🏥</div>
+        <h4>In-Patient Care Info</h4>
+        <p>Information on ward admissions, nursing support, and post-treatment care available at our hospital facility.</p>
+        <span class="svc-tag" style="background:#e0f4f7;color:#088395">Hospital</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="departments" style="background:#fff;border-top:1px solid var(--border);border-bottom:1px solid var(--border)">
+  <div class="section-inner">
+    <h2>Departments</h2>
+    <p class="sub">Specialists across major branches of medicine</p>
+    <div class="dept-grid">
+      <div class="dept"><span class="dept-icon">❤️</span><div class="dept-name">Cardiology</div><div class="dept-desc">Heart &amp; blood vessels</div></div>
+      <div class="dept"><span class="dept-icon">🧠</span><div class="dept-name">Neurology</div><div class="dept-desc">Brain &amp; nervous system</div></div>
+      <div class="dept"><span class="dept-icon">🦴</span><div class="dept-name">Orthopedics</div><div class="dept-desc">Bones &amp; joints</div></div>
+      <div class="dept"><span class="dept-icon">👶</span><div class="dept-name">Pediatrics</div><div class="dept-desc">Child health care</div></div>
+      <div class="dept"><span class="dept-icon">🔬</span><div class="dept-name">Dermatology</div><div class="dept-desc">Skin &amp; hair</div></div>
+      <div class="dept"><span class="dept-icon">💊</span><div class="dept-name">General Medicine</div><div class="dept-desc">Everyday &amp; general care</div></div>
+      <div class="dept"><span class="dept-icon">👂</span><div class="dept-name">ENT</div><div class="dept-desc">Ear, nose &amp; throat</div></div>
+      <div class="dept"><span class="dept-icon">👩‍⚕️</span><div class="dept-name">Gynecology</div><div class="dept-desc">Women's health</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <h2>Ready to Take Control of Your Health?</h2>
+  <p>Register for free and book your first appointment in less than a minute.</p>
+  <a href="/register" class="btn btn-cta">Create Free Account</a>
+</section>
+
+<footer class="footer">
+  © 2026 MediCare Hospital Management System &nbsp;·&nbsp; Chennai, India
+</footer>
+</body></html>

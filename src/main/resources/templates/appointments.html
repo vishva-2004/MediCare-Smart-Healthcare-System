@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Appointments — MediCare</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+.filter-bar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.filter-btn{padding:6px 16px;border-radius:20px;font-size:13px;font-weight:600;cursor:pointer;border:1.5px solid var(--border);background:#fff;color:var(--muted);transition:all .15s}
+.filter-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.appt-row{background:#fff;border:1px solid var(--border);border-radius:10px;padding:16px 20px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;box-shadow:var(--shadow);transition:box-shadow .15s}
+.appt-row:hover{box-shadow:var(--shadow-lg)}
+.appt-left{display:flex;align-items:center;gap:14px}
+.appt-date-box{background:var(--primary);color:#fff;border-radius:8px;padding:8px 12px;text-align:center;min-width:52px}
+.appt-date-box .day{font-size:20px;font-weight:800;line-height:1;display:block}
+.appt-date-box .mon{font-size:10px;text-transform:uppercase;letter-spacing:.5px;opacity:.85}
+.appt-main h3{font-size:15px;font-weight:700;color:var(--primary);margin-bottom:2px}
+.appt-main p{font-size:13px;color:var(--muted)}
+.appt-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.time-chip{background:var(--accent-light);color:var(--primary);border-radius:6px;padding:4px 10px;font-size:12px;font-weight:600}
+</style>
+</head>
+<body>
+<nav class="topbar" id="topbar"></nav>
+<div class="container">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 class="page-title" style="margin-bottom:0">Appointments</h1>
+      <p class="page-sub" style="margin-bottom:0" id="sub">Your scheduled visits</p>
+    </div>
+    <a href="/doctors" class="btn btn-accent" id="bookBtn" style="display:none">+ Book New</a>
+  </div>
+
+  <div class="filter-bar">
+    <button class="filter-btn active" onclick="filter('ALL',this)">All</button>
+    <button class="filter-btn" onclick="filter('PENDING',this)">Pending</button>
+    <button class="filter-btn" onclick="filter('CONFIRMED',this)">Confirmed</button>
+    <button class="filter-btn" onclick="filter('COMPLETED',this)">Completed</button>
+    <button class="filter-btn" onclick="filter('CANCELLED',this)">Cancelled</button>
+  </div>
+
+  <div id="list"><p style="color:var(--muted)">Loading...</p></div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script>
+let allAppts = [];
+let currentRole = '';
+
+if (MediCare.requireLogin()) {
+  MediCare.renderTopbar('appointments');
+  currentRole = MediCare.role();
+  const isAdmin = currentRole === 'ADMIN';
+  const isPatient = currentRole === 'PATIENT';
+  document.getElementById('sub').textContent = isAdmin ? 'All appointments in the system' : 'Your scheduled visits';
+  if (isPatient) document.getElementById('bookBtn').style.display = 'inline-flex';
+  load(isAdmin ? '/appointment/all' : '/appointment/my');
+}
+
+async function load(url){
+  const res = await MediCare.api(url);
+  if (!res) return;
+  allAppts = await res.json();
+  renderList(allAppts);
+}
+
+function filter(status, btn){
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const filtered = status==='ALL' ? allAppts : allAppts.filter(a=>a.status===status);
+  renderList(filtered);
+}
+
+function renderList(list){
+  const box = document.getElementById('list');
+  if (!list.length) { box.innerHTML='<div class="card" style="text-align:center;color:var(--muted);padding:32px">No appointments found.</div>'; return; }
+  const isDoctor = currentRole==='DOCTOR';
+  const isAdmin  = currentRole==='ADMIN';
+  const isPatient= currentRole==='PATIENT';
+
+  box.innerHTML = list.map(a => {
+    const d = new Date(a.appointmentDate||'');
+    const day = isNaN(d.getDate()) ? '--' : d.getDate();
+    const mon = isNaN(d.getDate()) ? '---' : d.toLocaleString('default',{month:'short'}).toUpperCase();
+    const slot = a.timeSlot ? formatSlot(a.timeSlot) : '';
+
+    let actions = '';
+    if ((isDoctor||isAdmin) && a.status==='PENDING') {
+      actions += `<button class="btn btn-accent" style="font-size:12px;padding:6px 14px" onclick="act(${a.id},'confirm')">Confirm</button>`;
+    }
+    if ((isDoctor||isAdmin) && a.status==='CONFIRMED') {
+      actions += `<button class="btn btn-primary" style="font-size:12px;padding:6px 14px" onclick="act(${a.id},'complete')">Complete</button>`;
+    }
+    if ((isPatient) && (a.status==='PENDING'||a.status==='CONFIRMED')) {
+      actions += `<button class="btn btn-danger" style="font-size:12px;padding:6px 14px" onclick="cancelAppt(${a.id})">Cancel</button>`;
+    }
+    if (isAdmin && (a.status==='PENDING'||a.status==='CONFIRMED')) {
+      actions += `<button class="btn btn-outline" style="font-size:12px;padding:6px 14px" onclick="act(${a.id},'cancel')">Cancel</button>`;
+    }
+
+    return `<div class="appt-row">
+      <div class="appt-left">
+        <div class="appt-date-box">
+          <span class="day">${day}</span>
+          <span class="mon">${mon}</span>
+        </div>
+        <div class="appt-main">
+          <h3>${isPatient ? 'Dr. '+(a.doctorName||'-') : (a.patientName||'-')}</h3>
+          <p>${a.specialization||''} ${a.symptoms?'· '+a.symptoms.substring(0,40)+(a.symptoms.length>40?'...':''):''}</p>
+        </div>
+      </div>
+      <div class="appt-right">
+        ${slot ? `<span class="time-chip">⏰ ${slot}</span>` : ''}
+        <span class="badge ${badgeFor(a.status)}">${a.status}</span>
+        ${actions}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function act(id, action){
+  const res = await MediCare.api('/appointment/'+action+'/'+id, {method:'POST'});
+  if (res && res.ok) location.reload();
+}
+
+async function cancelAppt(id){
+  if (!confirm('Cancel this appointment? The slot will become available again.')) return;
+  const res = await MediCare.api('/appointment/cancel/'+id, {method:'POST'});
+  if (res) {
+    const data = await res.json();
+    alert(data.message || 'Appointment cancelled.');
+    if (res.ok) location.reload();
+  }
+}
+
+function formatSlot(slot){
+  const [h,m] = slot.split(':');
+  const hr = parseInt(h);
+  return (hr%12||12)+':'+(m||'00')+' '+(hr<12?'AM':'PM');
+}
+function badgeFor(s){
+  if(s==='CONFIRMED') return 'badge-success';
+  if(s==='CANCELLED') return 'badge-danger';
+  if(s==='COMPLETED') return 'badge-info';
+  return 'badge-warn';
+}
+</script>
+</body></html>

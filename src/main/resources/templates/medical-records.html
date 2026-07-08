@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Medical Records — MediCare</title>
+<link rel="stylesheet" href="/css/style.css">
+<style>
+.rec-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:22px;margin-bottom:14px;box-shadow:var(--shadow)}
+.rec-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px}
+.rec-doc{display:flex;align-items:center;gap:10px}
+.rec-avatar{width:38px;height:38px;border-radius:50%;background:var(--primary);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:15px;flex-shrink:0}
+.rec-doc-name{font-weight:700;color:var(--primary);font-size:14px}
+.rec-doc-spec{font-size:12px;color:var(--muted)}
+.rec-date{font-size:12px;color:var(--muted);background:#f8fafc;border-radius:6px;padding:4px 10px;border:1px solid var(--border)}
+.rec-body{display:grid;gap:10px}
+.rec-field{border-left:3px solid var(--accent-light);padding:8px 14px;background:#fafbfc;border-radius:0 6px 6px 0}
+.rec-field .label{font-size:11px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.rec-field .value{font-size:14px;color:var(--text);line-height:1.5}
+.rec-diagnosis .rec-field{border-left-color:var(--primary)}
+.rec-presc .rec-field{border-left-color:#16a34a}
+.rec-notes .rec-field{border-left-color:#088395}
+.empty-state{text-align:center;padding:48px 24px}
+.empty-state .icon{font-size:48px;margin-bottom:16px}
+.empty-state h3{color:var(--primary);margin-bottom:8px}
+.empty-state p{color:var(--muted);font-size:14px}
+</style>
+</head>
+<body>
+<nav class="topbar" id="topbar"></nav>
+<div class="container">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px">
+    <div>
+      <h1 class="page-title" style="margin-bottom:0">Medical Records</h1>
+      <p class="page-sub" style="margin-bottom:0">Prescriptions, diagnoses and doctor notes</p>
+    </div>
+    <span id="recCount" class="badge badge-info" style="font-size:13px;padding:6px 14px">0 Records</span>
+  </div>
+  <div id="list"><p style="color:var(--muted)">Loading...</p></div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script>
+if (MediCare.requireLogin()) {
+  MediCare.renderTopbar('records');
+  const url = MediCare.role()==='PATIENT' ? '/medical-record/my' : '/medical-record';
+  (async ()=>{
+    const res = await MediCare.api(url);
+    if (!res) return;
+    const list = await res.json();
+    const box = document.getElementById('list');
+    document.getElementById('recCount').textContent = list.length + ' Record' + (list.length!==1?'s':'');
+
+    if (!list.length) {
+      box.innerHTML = `<div class="empty-state">
+        <div class="icon">📋</div>
+        <h3>No Medical Records Yet</h3>
+        <p>Your medical records will appear here after your doctor completes a visit and adds your prescription.</p>
+        <a href="/doctors" class="btn btn-accent" style="margin-top:16px">Book an Appointment</a>
+      </div>`;
+      return;
+    }
+
+    box.innerHTML = list.map(r => {
+      const initials = (r.doctorName||'D').charAt(0).toUpperCase();
+      return `<div class="rec-card">
+        <div class="rec-header">
+          <div class="rec-doc">
+            <div class="rec-avatar">${initials}</div>
+            <div>
+              <div class="rec-doc-name">Dr. ${r.doctorName||'-'}</div>
+              <div class="rec-doc-spec">${r.specialization||''}</div>
+            </div>
+          </div>
+          <span class="rec-date">📅 ${r.recordDate||r.appointmentDate||'-'}</span>
+        </div>
+        ${MediCare.role()!=='PATIENT' ? `<div style="font-size:13px;color:var(--muted);margin-bottom:10px">Patient: <strong>${r.patientName||'-'}</strong></div>` : ''}
+        <div class="rec-body">
+          ${r.diagnosis ? `<div class="rec-diagnosis"><div class="rec-field"><div class="label">Diagnosis</div><div class="value">${r.diagnosis}</div></div></div>` : ''}
+          ${r.prescription ? `<div class="rec-presc"><div class="rec-field"><div class="label">Prescription / Medicines</div><div class="value">${r.prescription}</div></div></div>` : ''}
+          ${r.notes ? `<div class="rec-notes"><div class="rec-field"><div class="label">Doctor's Notes</div><div class="value">${r.notes}</div></div></div>` : ''}
+          ${!r.diagnosis && !r.prescription && !r.notes ? '<p style="color:var(--muted);font-size:13px">No details recorded.</p>' : ''}
+        </div>
+      </div>`;
+    }).join('');
+  })();
+}
+</script>
+</body></html>

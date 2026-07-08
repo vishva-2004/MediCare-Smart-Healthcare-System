@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Patients — MediCare</title>
+<link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<nav class="topbar" id="topbar"></nav>
+<div class="container">
+  <h1 class="page-title">Patients</h1>
+  <p class="page-sub">All registered patients — <span id="count">0</span> total</p>
+  <div class="card" style="padding:0;overflow:hidden">
+    <div id="list" style="color:var(--muted);padding:20px">Loading...</div>
+  </div>
+</div>
+
+<script src="/js/auth.js"></script>
+<script>
+if (MediCare.requireLogin()) {
+  MediCare.renderTopbar('patients');
+  loadPatients();
+}
+
+async function loadPatients(){
+  const res = await MediCare.api('/patient');
+  if (!res) return;
+  const list = await res.json();
+  const box = document.getElementById('list');
+  document.getElementById('count').textContent = list.length;
+
+  if (!list.length) { box.innerHTML='<p style="color:var(--muted);padding:12px">No patients registered yet.</p>'; return; }
+
+  const isAdmin = MediCare.role() === 'ADMIN';
+
+  box.innerHTML = '<table class="table"><thead><tr>'
+    + '<th>Name</th><th>Email</th><th>Phone</th><th>Gender</th><th>Blood Group</th><th>Age</th><th>Registered</th>'
+    + (isAdmin ? '<th>Action</th>' : '')
+    + '</tr></thead><tbody>'
+    + list.map(p => `<tr>
+        <td><strong style="color:var(--primary)">${p.name||'-'}</strong></td>
+        <td>${p.email||'-'}</td>
+        <td>${p.phone||'-'}</td>
+        <td>${p.gender||'-'}</td>
+        <td>${p.bloodGroup||'-'}</td>
+        <td>${p.age||'-'}</td>
+        <td>${p.registeredDate||'-'}</td>
+        ${isAdmin ? `<td><button class="btn btn-danger" style="font-size:12px;padding:4px 12px" onclick="deletePatient(${p.id},'${p.name}')">Delete</button></td>` : ''}
+      </tr>`).join('')
+    + '</tbody></table>';
+}
+
+async function deletePatient(id, name){
+  if (!confirm('Delete patient "'+name+'"? All their appointments and medical records will also be deleted.')) return;
+  const res = await MediCare.api('/admin/patient/'+id, {method:'DELETE'});
+  if (!res) return;
+  const data = await res.json();
+  alert(data.message || 'Deleted');
+  if (res.ok) loadPatients();
+}
+</script>
+</body></html>
